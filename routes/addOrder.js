@@ -1,15 +1,33 @@
-const express = require('express');
+import express from 'express';
+import connectDB from '../mongodbConnection.js';
+
 const router = express.Router();
 
-// POST new order
 router.post('/', async (req, res) => {
-    const db = req.app.locals.db;
     try {
-        const result = await db.collection('Orders').insertOne(req.body);
-        res.status(201).json(result.ops[0]); // Respond with the created order
-    } catch (err) {
-        res.status(500).json({ error: 'Failed to add order', details: err.message });
+        const { client, database } = await connectDB();
+        const ordersCollection = database.collection('Orders');
+
+        const { name, phone, cart, total } = req.body;
+
+        const newOrder = {
+            name,
+            phone,
+            cart,
+            total,
+            createdAt: new Date(),
+        };
+
+        const result = await ordersCollection.insertOne(newOrder);
+
+        console.log("Order placed successfully", newOrder);
+        res.status(201).json({ message: 'Order placed successfully', orderId: result.insertedId });
+
+        await client.close();
+    } catch (error) {
+        console.error("Error placing order:", error);
+        res.status(500).json({ message: "Internal server error" });
     }
 });
 
-module.exports = router;
+export default router;

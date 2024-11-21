@@ -1,25 +1,35 @@
-const express = require('express');
-const router = express.Router();
-const { ObjectId } = require('mongodb');
+import express from 'express';
+import connectDB from '../mongodbConnection.js';
+import { ObjectId } from 'mongodb';
 
-// PUT update lesson
-router.put('/:id', async (req, res) => {
-    const db = req.app.locals.db;
-    const { id } = req.params;
+const router = express.Router();
+
+router.put('/:clubId', async (req, res) => {
     try {
-        const updateResult = await db.collection('Lessons').updateOne(
-            { _id: ObjectId(id) }, // Match lesson by ID
-            { $set: req.body } // Update the specified fields
+        const { client, database } = await connectDB();
+        const clubsCollection = database.collection('Clubs');
+        const { clubId } = req.params;
+        const { availableInventory } = req.body;
+
+        const result = await clubsCollection.updateOne(
+            { _id: new ObjectId(clubId) },
+            { $set: { availableInventory } }
         );
 
-        if (updateResult.matchedCount === 0) {
-            res.status(404).json({ error: 'Lesson not found' });
-        } else {
-            res.status(200).json({ message: 'Lesson updated successfully' });
+        if (result.matchedCount === 0) {
+            console.log("No club found with ID:", clubId);
+            res.status(404).json({ message: "Club not found" });
+            return;
         }
-    } catch (err) {
-        res.status(500).json({ error: 'Failed to update lesson', details: err.message });
+
+        console.log("Club availability updated:", clubId);
+        res.status(200).json({ message: "Availability updated successfully" });
+
+        await client.close();
+    } catch (error) {
+        console.error("Error updating club availability:", error);
+        res.status(500).json({ message: "Internal server error" });
     }
 });
 
-module.exports = router;
+export default router;
