@@ -1,7 +1,6 @@
 import express from 'express';
 import connectDB from '../mongodbConnection.js';
 import { ObjectId } from 'mongodb';
-
 const router = express.Router();
 
 router.put('/:clubId', async (req, res) => {
@@ -9,16 +8,39 @@ router.put('/:clubId', async (req, res) => {
         const { client, database } = await connectDB();
         const clubsCollection = database.collection('Clubs');
         const { clubId } = req.params;
-        const { availableInventory } = req.body;
+        const { quantity = 1 } = req.body; // Default to 1 if not provided
+
+        // First get the current club to check inventory
+        const club = await clubsCollection.findOne({ _id: new ObjectId(clubId) });
+        
+        if (!club) {
+            console.log("No club found with ID:", clubId);
+            res.status(404).json({ message: "Club not found" });
+            return;
+        }
+
+        // Calculate new inventory
+        const newInventory = club.availableInventory - quantity;
+        
+        // Validate inventory won't go negative
+        if (newInventory < 0) {
+            res.status(400).json({ 
+                message: "Not enough inventory available",
+                availableInventory: club.availableInventory
+            });
+            return;
+        }
 
         console.log('Updating club:', {
             clubId,
-            newAvailability: availableInventory
+            currentInventory: club.availableInventory,
+            quantityToReduce: quantity,
+            newInventory: newInventory
         });
 
         const result = await clubsCollection.updateOne(
             { _id: new ObjectId(clubId) },
-            { $set: { availableInventory } }
+            { $set: { availableInventory: newInventory } }
         );
 
         console.log('Update result:', {
@@ -26,14 +48,12 @@ router.put('/:clubId', async (req, res) => {
             modifiedCount: result.modifiedCount
         });
 
-        if (result.matchedCount === 0) {
-            console.log("No club found with ID:", clubId);
-            res.status(404).json({ message: "Club not found" });
-            return;
-        }
-
         console.log("Club availability updated:", clubId);
-        res.status(200).json({ message: "Availability updated successfully" });
+        res.status(200).json({ 
+            message: "Availability updated successfully",
+            newAvailability: newInventory
+        });
+
         await client.close();
     } catch (error) {
         console.error("Error updating club availability:", error);

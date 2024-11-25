@@ -37,9 +37,12 @@ router.get('/search', async (req, res) => {
         // Create a case-insensitive regular expression for searching
         const searchRegex = new RegExp(query, 'i');
 
-        // Search in subject field
+        // Use $or to search in either the 'subject' or 'location' field
         const searchResults = await clubsCollection.find({
-            subject: searchRegex
+            $or: [
+                { subject: searchRegex }, // Search by subject
+                { location: searchRegex }  // Search by location
+            ]
         }).toArray();
 
         await client.close();
