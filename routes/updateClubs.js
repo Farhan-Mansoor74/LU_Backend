@@ -3,6 +3,7 @@ import connectDB from '../mongodbConnection.js';
 import { ObjectId } from 'mongodb';
 const router = express.Router();
 
+// Router to update club availability after user submits an order
 router.put('/:clubId', async (req, res) => {
     try {
         const { client, database } = await connectDB();
@@ -38,14 +39,15 @@ router.put('/:clubId', async (req, res) => {
             newInventory: newInventory
         });
 
+        // Updates available inventory to new inventory
         const result = await clubsCollection.updateOne(
             { _id: new ObjectId(clubId) },
             { $set: { availableInventory: newInventory } }
         );
 
         console.log('Update result:', {
-            matchedCount: result.matchedCount,
-            modifiedCount: result.modifiedCount
+            matchedCount: result.matchedCount, //Indicates the number of documents that matched the filter criteria.
+            modifiedCount: result.modifiedCount //Indicates the number of documents that were modified by the update operation.
         });
 
         console.log("Club availability updated:", clubId);
