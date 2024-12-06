@@ -1,7 +1,10 @@
 import express from 'express';
 import connectDB from '../mongodbConnection.js';
+
+// Create new router instance
 const router = express.Router();
 
+// Route to add an order (when user submits order)
 router.post('/', async (req, res) => {
     console.log('Received order request body:', req.body);
     try {
@@ -32,6 +35,7 @@ router.post('/', async (req, res) => {
             createdAt: new Date(),
         };
 
+        // Add order to orders collection
         const result = await ordersCollection.insertOne(newOrder);
         console.log("Order placed successfully", newOrder);
         console.log("Inserted order ID:", result.insertedId);
