@@ -8,6 +8,7 @@ async function connectDB() {
   const client = new MongoClient(url);
 
   try {
+    // Asynchronous connection to database
     await client.connect();
     const database = client.db(dbName);
     return { client, database };

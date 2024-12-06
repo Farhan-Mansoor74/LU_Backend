@@ -1,3 +1,4 @@
+// Logger middleware
 const logger = (req, res, next) => {
     const currentTime = new Date().toISOString(); // Get the current date and time
     console.log(`${currentTime} - ${req.method} Request to ${req.url}`);
