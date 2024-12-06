@@ -3,10 +3,13 @@ import connectDB from '../mongodbConnection.js';
 
 const router = express.Router();
 
+// Route to get clubs from mongodb
 router.get('/' , async (req,res) => {
     try{
         const { client, database } = await connectDB();
         const clubsCollection = database.collection('Clubs');
+
+        // Adds clubs to an array
         const allClubs = await clubsCollection.find().toArray();
 
         if (allClubs.length === 0) {
@@ -14,6 +17,8 @@ router.get('/' , async (req,res) => {
             res.status(404).json({message: "No clubs found"});
         }
         console.log("Clubs found: " , allClubs);
+
+        // Sends the response
         res.status(200).json(allClubs);
 
         await client.close();
@@ -23,9 +28,10 @@ router.get('/' , async (req,res) => {
     }
 });
 
+// Route to search clubs in mongodb
 router.get('/search', async (req, res) => {
     try {
-        const { query } = req.query; // Get the search query from request parameters
+        const { query } = req.query; // Getting search query from request parameters
         
         if (!query) {
             return res.status(400).json({ message: "Search query is required" });
@@ -40,8 +46,8 @@ router.get('/search', async (req, res) => {
         // Use $or to search in either the 'subject' or 'location' field
         const searchResults = await clubsCollection.find({
             $or: [
-                { subject: searchRegex }, // Search by subject
-                { location: searchRegex }  // Search by location
+                { subject: searchRegex }, 
+                { location: searchRegex }  
             ]
         }).toArray();
 
@@ -55,6 +61,8 @@ router.get('/search', async (req, res) => {
         }
 
         console.log("Search results found:", searchResults);
+
+        // Sends sea
         res.status(200).json(searchResults);
 
     } catch (error) {
